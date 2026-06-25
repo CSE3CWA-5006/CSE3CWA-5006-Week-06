@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo ""
+echo "============================================================"
+echo "Modern React Dashboard - Ubuntu run helper"
+echo "============================================================"
+echo ""
+echo "This helper installs npm packages and starts the Vite dev server."
+echo "The demo focuses on React interface design, not backend APIs."
+echo ""
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "Node.js was not found. Install Node.js 24 LTS first."
+  echo "Example:"
+  echo "  curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -"
+  echo "  sudo apt install -y nodejs"
+  exit 1
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm was not found. Check your Node.js installation."
+  exit 1
+fi
+
+echo "Node version: $(node --version)"
+echo "npm version:  $(npm --version)"
+echo ""
+echo "Installing packages if needed..."
+npm install
+echo ""
+echo "Starting Vite. Open http://localhost:5173 in your browser."
+echo "Press Ctrl+C in this terminal to stop the server."
+echo ""
+npm run dev

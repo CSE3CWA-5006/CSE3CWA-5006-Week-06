@@ -1,0 +1,26 @@
+[
+  {
+    "id": "cw-001",
+    "title": "Responsive project dashboard",
+    "owner": "Ava",
+    "status": "in_progress",
+    "priority": "high",
+    "createdAt": "2026-06-01T09:00:00.000Z"
+  },
+  {
+    "id": "cw-002",
+    "title": "Express API review",
+    "owner": "Noah",
+    "status": "complete",
+    "priority": "medium",
+    "createdAt": "2026-06-03T10:30:00.000Z"
+  },
+  {
+    "id": "cw-003",
+    "title": "Next.js migration notes",
+    "owner": "Mia",
+    "status": "planned",
+    "priority": "low",
+    "createdAt": "2026-06-05T13:15:00.000Z"
+  }
+]
