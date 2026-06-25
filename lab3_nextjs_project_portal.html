@@ -1,0 +1,349 @@
+<!--
+  CSE3CWA / CSE5006 — Week 6 Workshop Lab
+  Copyright (c) 2026 Dr Shuo Ding <shuoding@outlook.com>
+  Licensed under the GNU Affero General Public License v3.0 or later
+  (AGPL-3.0-or-later). Any copy, modification, or distribution must retain
+  this copyright notice and remain under the AGPL.
+-->
+<h4 class="resources-signpost" style="margin-bottom: 1rem;"><img
+    class="img-fluid" style="vertical-align: middle; margin-right: 0.5rem;"
+    src="/theme/latrobe/assets/2023/SVG/resources.svg" alt="" width="50"
+    height="50">Lab 3: Next.js Full-Stack Project Portal (Advanced)</h4>
+<div class="alert alert-success"
+  style="background-color: #e7e0f5; color: #242424; margin: 0 auto 1.2rem; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>Who does this lab?</strong></p>
+      <p>This lab is for <strong>CSE5006 students only</strong>. CSE3CWA
+        students are <strong>not </strong>required to complete Lab 3. </p>
+    </div>
+  </div>
+</div>
+<p>This lab uses the <strong>nextjs_project_portal</strong> project. Unlike the
+  first two projects, this is a <strong>full-stack</strong> application:
+  frontend and backend live in one <strong>Next.js</strong> application. You
+  will install and run it, follow the data flow, view and edit its file-based
+  data store, and then make small, guided code changes to add a new feature and
+  change the appearance. Everything below has been tested to work step by step.
+</p>
+<h4>Part 1: What is Next.js, and why is it different?</h4>
+<p>React on its own (Lab 1) is only a frontend library: it renders components in
+  the browser and needs a separate backend (Lab 2) for data. <strong>Next.js is
+    a framework built on top of React</strong> that combines both sides into one
+  organised project. With Next.js you get, in a single application:</p>
+<ul>
+  <li><strong>Server Components</strong> — pages that run on the server and can
+    read data directly before sending finished HTML to the browser. They are
+    fast and do not ship their code to the client.</li>
+  <li><strong>Client Components</strong> — interactive pieces that run in the
+    browser (marked with <code>"use client"</code>), used for forms, buttons and
+    anything with browser state.</li>
+  <li><strong>Server Actions</strong> — functions marked <code>"use
+      server"</code> that a form can call directly to submit data, with no
+    separate API call to write by hand.</li>
+  <li><strong>Route Handlers</strong> — real JSON API endpoints
+    (<code>app/api/.../route.js</code>) living in the same project.</li>
+  <li><strong>File-based routing</strong> — the folder structure under
+    <code>app/</code> defines the URLs. <code>app/page.jsx</code> is the home
+    page; <code>app/api/projects/route.js</code> is the
+    <code>/api/projects</code> endpoint.</li>
+  <li><strong>Loading and error UI</strong> — <code>app/loading.jsx</code> and
+    <code>app/error.jsx</code> are shown automatically during loading or on
+    error.</li>
+</ul>
+<p>The special idea to remember: <strong>in Next.js, the same project decides
+    what runs on the server and what runs in the browser.</strong> This is why
+  it is called a full-stack React framework.</p>
+<h4>Part 2: Software setup</h4>
+<p>If you completed Lab 1 and Lab 2 you already have Node.js, npm and the code,
+  so skip to Part 3. Otherwise:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;"># check versions (need Node.js 20 LTS or newer)
+node -v
+npm -v
+
+# if Node.js is missing:
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# get the code (all three projects are in one repo):
+cd ~
+git clone https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-06.git
+cd CSE3CWA-5006-Week-06</pre>
+<p>The repository is also browseable at
+  <code>https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-06/tree/main</code>,
+  where you can download a ZIP from the green <strong>Code</strong> button
+  instead of cloning. The folder for this lab is
+  <code>nextjs_project_portal</code>.</p>
+<h4>Part 3: Run the Next.js project</h4>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cd nextjs_project_portal
+chmod +x run_ubuntu.sh
+./run_ubuntu.sh</pre>
+<p>The first run installs packages, which can take a minute. When ready, open:
+</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">http://localhost:3000</pre>
+<p>You will see a hero header, a summary panel, three status metrics, a "Create
+  a project" form on the left, and a server-rendered list of project cards on
+  the right.</p>
+<h4>Part 4: Use the app and watch the full-stack data flow</h4>
+<p>Use the <strong>Create a project</strong> form: enter a title and owner,
+  choose a status and priority, then select <strong>Create project</strong>. The
+  new project appears immediately in the list on the right, and the metric
+  counts update. Notice you did not reload the page yourself.</p>
+<p>Here is what happened across the stack:</p>
+<ol>
+  <li>The form is a <strong>Client Component</strong>
+    (<code>components/ProjectForm.jsx</code>, marked <code>"use client"</code>),
+    so it can manage its own submitting state.</li>
+  <li>On submit, it calls a <strong>Server Action</strong>
+    (<code>app/actions.js</code>, marked <code>"use server"</code>) directly —
+    no fetch call is written by hand.</li>
+  <li>The Server Action calls <code>createProject</code> in
+    <code>lib/projects.js</code>, which validates the input and <strong>writes
+      the new project to the data file on disk</strong>.</li>
+  <li>The action calls <code>revalidatePath("/")</code>, which tells Next.js to
+    re-render the home page.</li>
+  <li>The home page (<code>app/page.jsx</code>) is a <strong>Server
+      Component</strong>; it re-reads the data file and sends fresh HTML, so the
+    new card appears.</li>
+</ol>
+<p>This is the whole point of the framework: a browser action triggered a server
+  function that changed stored data and re-rendered the page, all in one
+  project.</p>
+<h4>Part 5: Test the built-in API (Route Handler)</h4>
+<p>The same project also exposes a JSON API. You will test it with
+  <strong>curl</strong>, a command-line tool that sends an HTTP request and
+  prints the raw response — the standard way developers talk to an API directly.
+  It is normally pre-installed on Ubuntu; check it and install it if missing:
+</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">curl --version
+# if it is missing:
+sudo apt install -y curl</pre>
+<p>You can also use a graphical client such as Postman (see Lab 2 for installing
+  it with <code>sudo snap install postman</code>). Open a second terminal so the
+  dev server keeps running, then test the API:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;"># read all projects as JSON
+curl http://localhost:3000/api/projects
+
+# create a project through the API
+curl -X POST http://localhost:3000/api/projects \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Accessibility review","owner":"Mina","status":"planned","priority":"high"}'
+
+# try invalid data to see the validation message (title too short)
+curl -X POST http://localhost:3000/api/projects \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"ab","owner":"X"}'</pre>
+<p>The valid create returns <code>201</code> and the new project; the invalid
+  one returns a clear error message. Refresh <code>http://localhost:3000</code>
+  in the browser and the project you created through the API also appears in the
+  list — the form and the API share the same data file.</p>
+<div class="alert alert-success"
+  style="background-color: #d9ebd0; color: #242424; margin: 1.2rem auto; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>Allowed field values</strong></p>
+      <p><code>status</code>: planned, in_progress, complete.
+        <code>priority</code>: low, medium, high. <code>title</code>: at least 3
+        characters. <code>owner</code>: at least 2 characters.</p>
+    </div>
+  </div>
+</div>
+<h4>Part 6: View the file-based data store directly</h4>
+<p>Unlike Lab 2 (in-memory), this project stores data in a real file:
+  <code>data/projects.json</code>. You can read it with native Ubuntu tools:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cat data/projects.json</pre>
+<p>Create a project (via the form or the API), then run <code>cat</code> again:
+  the new record is now written into this file. This is your "database table" in
+  file form.</p>
+<h5>Insert a record directly into the store, then refresh the UI</h5>
+<p>You can add data straight to the file and the running app will show it,
+  because the home page re-reads the file on every visit. Open the file in a
+  native editor:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">nano data/projects.json</pre>
+<p>The file is a JSON array. Add a new object as the first item, right after the
+  opening <code>[</code>, and make sure there is a comma after it. Use a recent
+  date so it sorts to the top:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">[
+  {
+    "id": "manual-001",
+    "title": "Inserted directly into the file",
+    "owner": "Admin",
+    "status": "in_progress",
+    "priority": "high",
+    "createdAt": "2026-12-31T09:00:00.000Z"
+  },
+  ... keep the existing projects here ...
+]</pre>
+<p>Save the file (in nano: <strong>Ctrl + O</strong>, <strong>Enter</strong>,
+  then <strong>Ctrl + X</strong>). Switch to the browser and refresh
+  <code>http://localhost:3000</code> with <strong>F5</strong>. Your manually
+  inserted project now appears at the top of the list, because the Server
+  Component re-read the file. This shows clearly how stored data flows back into
+  the rendered page on each request. (You can remove that entry later to restore
+  the original data.)</p>
+<div class="alert alert-success"
+  style="background-color: #fdf6d8; color: #242424; margin: 1.2rem auto; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>Why a refresh is enough here</strong></p>
+      <p>The home page sets <code>export const dynamic = "force-dynamic"</code>,
+        so Next.js does not cache it; every visit re-reads
+        <code>data/projects.json</code>. A real application would use a database
+        instead of a JSON file, but the flow — store changes, then the page
+        shows them — is the same idea.</p>
+    </div>
+  </div>
+</div>
+<h4>Part 7: Read the code with native tools (no changes yet)</h4>
+<p>Open these files and match each to its role in the framework:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cat app/page.jsx              # Server Component home page
+cat components/ProjectForm.jsx # "use client" interactive form
+cat app/actions.js             # "use server" Server Action
+cat app/api/projects/route.js  # Route Handler (JSON API)
+cat lib/projects.js            # data read/write + validation
+cat components/ProjectCard.jsx # how each project is displayed</pre>
+<p>To edit (in Part 8) you can use <code>nano</code> (beginner-friendly) or
+  <code>vi</code>. Official guides: <code>nano</code> at <a
+    href="https://www.nano-editor.org/docs.php" target="_blank"
+    rel="noopener">https://www.nano-editor.org/docs.php</a> and
+  <code>vi</code>/Vim at <a href="https://www.vim.org/docs.php" target="_blank"
+    rel="noopener">https://www.vim.org/docs.php</a>. In <code>nano</code>, save
+  with <strong>Ctrl + O</strong> then <strong>Enter</strong>, and exit with
+  <strong>Ctrl + X</strong>.</p>
+<ul>
+  <li><code>app/page.jsx</code> begins with no <code>"use client"</code>, so it
+    is a Server Component. It calls <code>getProjects()</code> directly — server
+    code reading data before rendering.</li>
+  <li><code>components/ProjectForm.jsx</code> starts with <code>"use
+      client"</code> because it uses browser interactivity
+    (<code>useActionState</code>).</li>
+  <li><code>app/actions.js</code> starts with <code>"use server"</code>; its
+    <code>createProjectAction</code> is the function the form submits to.</li>
+  <li><code>lib/projects.js</code> is the only place that reads and writes
+    <code>data/projects.json</code> and enforces the validation rules.</li>
+</ul>
+<p>Also look in the browser developer tools (<strong>F12</strong>): on the
+  <strong>Network</strong> tab, refresh and notice the home page arrives as
+  ready-made HTML from the server (Server Component), while
+  <code>/api/projects</code> returns JSON when you call it. This is the
+  server/client split in action.</p>
+<h4>Part 8: Add a new feature — a project "description" (guided code change)
+</h4>
+<p>Now you will add a <strong>description</strong> field that flows through the
+  whole stack: form → Server Action → data file → card. Make all five edits
+  below, then test. Each edit is small. Keep the dev server running; Next.js
+  reloads automatically.</p>
+<p><strong>Edit 1 — accept and store it.</strong> In
+  <code>lib/projects.js</code>, inside <code>createProject</code>, read the
+  description and include it in the saved object. Find the line that reads
+  <code>priority</code> and add a description line after it:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">const priority = cleanText(input.priority || "medium");
+const description = cleanText(input.description);</pre>
+<p>Then, in the same function, add <code>description</code> to the object that
+  is pushed (after the <code>priority</code> line):</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">    status,
+    priority,
+    description,
+    createdAt: new Date().toISOString()</pre>
+<p><strong>Edit 2 — forward it from the Server Action.</strong> In
+  <code>app/actions.js</code>, add <code>description</code> to the object passed
+  to <code>createProject</code> (after the <code>priority</code> line):</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">      status: formData.get("status"),
+      priority: formData.get("priority"),
+      description: formData.get("description")</pre>
+<p><strong>Edit 3 — add the input to the form.</strong> In
+  <code>components/ProjectForm.jsx</code>, add a description field after the
+  Owner label:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">      &lt;label&gt;
+        Description
+        &lt;textarea name="description" placeholder="Short summary of the project" rows={3} /&gt;
+      &lt;/label&gt;</pre>
+<p><strong>Edit 4 — show it on each card.</strong> In
+  <code>components/ProjectCard.jsx</code>, add a line that shows the description
+  when present, just after the Owner paragraph:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">        &lt;h3&gt;{project.title}&lt;/h3&gt;
+        &lt;p&gt;Owner: {project.owner}&lt;/p&gt;
+        {project.description ? &lt;p className="description"&gt;{project.description}&lt;/p&gt; : null}</pre>
+<p><strong>Edit 5 — style the new text.</strong> In <code>app/styles.css</code>,
+  add this rule at the end of the file:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">.description {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-top: 0.35rem;
+}</pre>
+<p><strong>Test it.</strong> In the browser, create a project and type something
+  in the new Description box. The new card shows your description, and <code>cat
+    data/projects.json</code> shows a <code>description</code> field saved in
+  the file. You added one field across the form, the server action, the data
+  layer and the display — the full stack.</p>
+<h4>Part 9: Upgrade the appearance (guided style change)</h4>
+<p>The whole colour scheme is controlled by CSS variables at the top of
+  <code>app/styles.css</code>, inside the <code>:root</code> block. Changing a
+  few variables restyles the entire app at once. Open the file:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">nano app/styles.css</pre>
+<p>Find these three lines near the top and change the colour values from the
+  teal/amber theme to a purple/pink theme:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">/* change FROM */
+--brand: #0f766e;
+--brand-dark: #115e59;
+--accent: #b45309;
+
+/* change TO */
+--brand: #6d28d9;
+--brand-dark: #5b21b6;
+--accent: #db2777;</pre>
+<p>Save the file. The browser updates instantly: the hero banner, headings,
+  buttons, focused inputs and highlights all switch to the new colours, because
+  every component reads these variables. This shows how a well-structured
+  stylesheet lets you re-theme an app by editing a few values in one place,
+  without touching any component. Experiment with your own colours, then restore
+  the originals if you wish.</p>
+<h4>How to stop the server</h4>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">Ctrl + C</pre>
+<p>Restart with <code>./run_ubuntu.sh</code> from the
+  <code>nextjs_project_portal</code> folder. For a production build instead of
+  the dev server, you can run <code>npm run build</code> then <code>npm run
+    start</code>.</p>
+<h4>Completion checklist (CSE5006)</h4>
+<ul>
+  <li>The Next.js app runs at <code>localhost:3000</code> and the form creates a
+    project that appears in the list.</li>
+  <li>You tested <code>GET</code> and <code>POST</code> on
+    <code>/api/projects</code>, including one validation error.</li>
+  <li>You viewed <code>data/projects.json</code>, inserted a record directly,
+    and saw it after refreshing the page.</li>
+  <li>You can explain the difference between a Server Component, a Client
+    Component, a Server Action and a Route Handler, pointing to the file for
+    each.</li>
+  <li>You added the <code>description</code> feature across all five files and
+    saw it saved and displayed.</li>
+  <li>You re-themed the app by editing the CSS variables in
+    <code>app/styles.css</code>.</li>
+</ul>
+<p
+  style="text-align: center; font-size: 0.78rem; color: #8a8f98; margin-top: 2.5rem;">
+  Designed by Dr Shuo Ding © 2026</p>

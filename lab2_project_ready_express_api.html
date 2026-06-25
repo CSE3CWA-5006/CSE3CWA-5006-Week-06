@@ -1,0 +1,297 @@
+<!--
+  CSE3CWA / CSE5006 — Week 6 Workshop Lab
+  Copyright (c) 2026 Dr Shuo Ding <shuoding@outlook.com>
+  Licensed under the GNU Affero General Public License v3.0 or later
+  (AGPL-3.0-or-later). Any copy, modification, or distribution must retain
+  this copyright notice and remain under the AGPL.
+-->
+<h4 class="resources-signpost" style="margin-bottom: 1rem;"><img
+    class="img-fluid" style="vertical-align: middle; margin-right: 0.5rem;"
+    src="/theme/latrobe/assets/2023/SVG/resources.svg" alt="" width="50"
+    height="50">Lab 2: Project-Ready Express API (Backend &amp; CRUD)</h4>
+<div class="alert alert-success"
+  style="background-color: #d9ebd0; color: #242424; margin: 0 auto 1.2rem; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>Who does this lab?</strong></p>
+      <p>This lab is for <strong>both CSE3CWA and CSE5006</strong> students.
+        Everyone completes Lab 1 and Lab 2. </p>
+    </div>
+  </div>
+</div>
+<p>This lab uses the <strong>project_ready_express_api</strong> project. It is a
+  backend-only application built with <strong>Node.js</strong> and
+  <strong>Express</strong>. It has no web page of its own; you talk to it with
+  HTTP requests. The goal is to install and run it, then send real requests to
+  perform <strong>CRUD</strong> (Create, Read, Update, Delete) and watch how a
+  request travels through the backend layers: <strong>route → validation →
+    controller → service (business rule) → repository (data)</strong> and back
+  as a JSON response. You will not change any code.</p>
+<h4>Part 1: Software setup</h4>
+<p>If you completed Lab 1, you already have Node.js, npm and the downloaded
+  code, so you can skip to Part 2. If not, do the short setup below first.</p>
+<h5>Step 1.1 — Node.js and Git</h5>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;"># check versions; both should print a number
+node -v
+npm -v
+
+# if Node.js is missing, install Node.js 20 LTS:
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# if Git is missing:
+sudo apt install -y git</pre>
+<h5>Step 1.2 — Get the code (if you have not already)</h5>
+<p>All three projects are in one repository:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-06/tree/main</pre>
+<p>Clone it with Git, or download the ZIP from the green <strong>Code</strong>
+  button on GitHub:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cd ~
+git clone https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-06.git
+cd CSE3CWA-5006-Week-06</pre>
+<p>The folder for this lab is <code>project_ready_express_api</code>.</p>
+<h4>Part 2: Run the API server</h4>
+<p>Move into the project and start it with the helper script. The script copies
+  the example settings file to <code>.env</code> the first time, installs
+  packages, and starts the server.</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cd project_ready_express_api
+chmod +x run_ubuntu.sh
+./run_ubuntu.sh</pre>
+<p>The server starts on port <strong>4000</strong>. The terminal prints the
+  health and projects URLs, and the demo API key. Leave this terminal running.
+</p>
+<div class="alert alert-success"
+  style="background-color: #fdf6d8; color: #242424; margin: 1.2rem auto; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>Where is the data stored?</strong></p>
+      <p>This teaching API keeps its projects in an <strong>in-memory
+          array</strong> (in the running Node.js process), seeded from
+        <code>src/data/projects.data.js</code>. That means changes you make with
+        Create / Update / Delete are real <em>while the server runs</em>, but
+        everything <strong>resets to the seed data when you restart</strong> the
+        server. This keeps the lab simple and repeatable. Lab 3 (Next.js) uses a
+        real file as its store so you can see data persist on disk.</p>
+    </div>
+  </div>
+</div>
+<h4>Part 3: Read data (the "R" in CRUD)</h4>
+<p>You can read from the API with your browser or with the terminal. Open a
+  <strong>second terminal</strong> (Ctrl + Alt + T) so the server keeps running
+  in the first one.</p>
+<h5>Step 3.1 — Health check in the browser</h5>
+<p>Open this address in your browser:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">http://localhost:4000/api/health</pre>
+<p>You should see a JSON response with <code>"ok": true</code> and a status of
+  <code>healthy</code>.</p>
+<h5>Step 3.2 — List and read projects with curl</h5>
+<p><strong>curl</strong> is a command-line tool that sends an HTTP request to a
+  server and prints the raw response. It is how developers talk to an API
+  directly, without a browser or any frontend. It is normally pre-installed on
+  Ubuntu; check it, and install it if missing:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">curl --version
+# if it is missing:
+sudo apt install -y curl</pre>
+<p>Now read data from the API. Each command below sends a request and prints the
+  JSON response:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;"># list all projects
+curl http://localhost:4000/api/projects
+
+# list with filtering, sorting and pagination
+curl 'http://localhost:4000/api/projects?status=on_track&amp;sortBy=progress&amp;order=desc&amp;page=1&amp;limit=2'
+
+# read one project by id
+curl http://localhost:4000/api/projects/1</pre>
+<p>The list response wraps the data in a consistent shape: <code>{ "ok": true,
+    "data": [ ... ], "meta": { page, limit, total, totalPages } }</code>. This
+  <code>ok / data / meta</code> shape is produced in <code>src/utils.js</code>
+  and used by every successful response.</p>
+<h5>Step 3.3 — Make the output readable</h5>
+<p>Raw JSON is hard to read on one line. Pipe it through a JSON formatter. If
+  you do not have one, install <code>jq</code> once:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">sudo apt install -y jq
+curl -s http://localhost:4000/api/projects | jq</pre>
+<h4>Part 4: Create, Update and Delete (the "C", "U", "D")</h4>
+<p>Read routes are public. Write routes (create, update, delete) are protected
+  and require the demo API key header <code>x-api-key: week6-demo-key</code>.
+  This shows how authentication middleware guards write access.</p>
+<h5>Step 4.1 — Create a project (POST)</h5>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">curl -X POST http://localhost:4000/api/projects \
+  -H 'Content-Type: application/json' \
+  -H 'x-api-key: week6-demo-key' \
+  -d '{"name":"Workshop API extension","owner":"Student","status":"on_track","category":"frontend","priority":"low","progress":25}'</pre>
+<p>You get back <code>201 Created</code> and the new project, including a new
+  <code>id</code>. Run the list command again and confirm the new project is
+  there.</p>
+<div class="alert alert-success"
+  style="background-color: #d9ebd0; color: #242424; margin: 1.2rem auto; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>Allowed field values (must match exactly)</strong></p>
+      <p><code>status</code>: planning, on_track, at_risk, complete.
+        <code>category</code>: frontend, database, authentication, devops.
+        <code>priority</code>: low, medium, high. <code>progress</code>: a whole
+        number 0–100. A project at 100 must have status <code>complete</code>.
+      </p>
+    </div>
+  </div>
+</div>
+<h5>Step 4.2 — Update a project (PATCH)</h5>
+<p>Use the <code>id</code> you got from the create step (for example
+  <code>5</code>). Change just one field:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">curl -X PATCH http://localhost:4000/api/projects/5 \
+  -H 'Content-Type: application/json' \
+  -H 'x-api-key: week6-demo-key' \
+  -d '{"progress":60}'</pre>
+<h5>Step 4.3 — Delete a project (DELETE)</h5>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">curl -X DELETE http://localhost:4000/api/projects/5 \
+  -H 'x-api-key: week6-demo-key'</pre>
+<h5>Step 4.4 — See the guards in action (error responses)</h5>
+<p>Try these on purpose to see how the API rejects bad requests:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;"># missing API key -&gt; 401 Unauthorized
+curl -X POST http://localhost:4000/api/projects \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"No key","owner":"X","status":"planning","category":"frontend","priority":"low","progress":0}'
+
+# invalid data (limit too large) -&gt; 400 Bad Request with details
+curl 'http://localhost:4000/api/projects?limit=999'
+
+# unknown id -&gt; 404 Not Found
+curl http://localhost:4000/api/projects/999</pre>
+<p>Notice every error also uses a consistent shape: <code>{ "ok": false,
+    "error": { "message": ... } }</code>, with a <code>details</code> list for
+  validation problems.</p>
+<h4>Part 5: Test with a graphical client (Postman-style)</h4>
+<p>curl is fast, but a graphical API client makes requests easier to read and
+  re-run. On Ubuntu you can install <strong>Postman</strong> with one command
+  using snap:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">sudo snap install postman</pre>
+<p>A free, lighter alternative that also installs through snap is
+  <strong>Hoppscotch</strong> or the VS Code "REST Client" extension; any of
+  them works. In Postman:</p>
+<ul>
+  <li>Create a new request, set the method to <strong>GET</strong> and the URL
+    to <code>http://localhost:4000/api/projects</code>, then select
+    <strong>Send</strong>. The JSON response appears, nicely formatted.</li>
+  <li>For a create, set the method to <strong>POST</strong> and the same
+    <code>/api/projects</code> URL. Under <strong>Headers</strong> add
+    <code>Content-Type: application/json</code> and <code>x-api-key:
+      week6-demo-key</code>. Under <strong>Body</strong> choose <strong>raw →
+      JSON</strong> and paste the same JSON object you used with curl. Select
+    <strong>Send</strong> and read the <code>201</code> response.</li>
+  <li>Repeat for PATCH and DELETE using the id of the project you created.</li>
+</ul>
+<p>This is exactly how professional developers talk to a backend while building
+  it, before any frontend exists.</p>
+<h4>Part 6: Understand the request flow through the layers (no code changes)
+</h4>
+<p>The whole point of this project is that the backend is <strong>not</strong>
+  one big file. Each responsibility lives in its own layer. Open the files in
+  <code>src/</code> with a native editor and match each one to a stage of the
+  request. To read a file:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cat src/routes/projects.routes.js
+less src/services/projects.service.js
+nano src/repositories/projects.repository.js   # Ctrl+X to exit
+vi src/schemas/projects.schema.js               # :q then Enter to exit</pre>
+<p>New to these editors? Official guides: <code>nano</code> at <a
+    href="https://www.nano-editor.org/docs.php" target="_blank"
+    rel="noopener">https://www.nano-editor.org/docs.php</a> and
+  <code>vi</code>/Vim at <a href="https://www.vim.org/docs.php" target="_blank"
+    rel="noopener">https://www.vim.org/docs.php</a>. For reading only,
+  <code>cat</code> and <code>less</code> need no editor knowledge.</p>
+<p>Follow a <strong>POST /api/projects</strong> request through the layers, in
+  order:</p>
+<ol>
+  <li><strong>Entry point</strong> — <code>src/server.js</code> starts the
+    server on port 4000; <code>src/app.js</code> wires up security (helmet,
+    cors), JSON parsing, logging, and the routes.</li>
+  <li><strong>Route</strong> — <code>src/routes/projects.routes.js</code> maps
+    each HTTP method and path to its handler, and lists the middleware that runs
+    first (auth, then validation):</li>
+</ol>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">projectsRouter.post("/", authRequired, validate({ body: projectCreateSchema }), controller.createProject);</pre>
+<ol start="3">
+  <li><strong>Authentication</strong> —
+    <code>src/middleware/authRequired.js</code> checks the
+    <code>x-api-key</code> header. Wrong key → 401, and the request stops here.
+  </li>
+  <li><strong>Validation</strong> — <code>src/middleware/validate.js</code> with
+    <code>src/schemas/projects.schema.js</code> checks the body against the
+    rules (a Zod schema). Bad data → 400 with details.</li>
+  <li><strong>Controller</strong> —
+    <code>src/controllers/projects.controller.js</code> reads the validated
+    input and calls the service. It does not contain business rules itself.</li>
+  <li><strong>Service (business rule)</strong> —
+    <code>src/services/projects.service.js</code> applies rules, such as: a
+    project at 100% progress must have status <code>complete</code>.</li>
+</ol>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">if (input.progress === 100 &amp;&amp; input.status !== "complete") {
+  throw new AppError(400, "A project with 100% progress should have status 'complete'.");
+}</pre>
+<ol start="7">
+  <li><strong>Repository (data)</strong> —
+    <code>src/repositories/projects.repository.js</code> is the only layer that
+    touches the data array: it filters, sorts, paginates, finds, pushes, updates
+    and splices records.</li>
+  <li><strong>Response</strong> — the controller sends a consistent JSON
+    response through helpers in <code>src/utils.js</code>; unknown routes and
+    thrown errors are handled centrally in
+    <code>src/middleware/errorHandler.js</code>.</li>
+</ol>
+<p>So one create request travels: <strong>route → auth → validate → controller →
+    service rule → repository (data changes) → JSON response</strong>. Read is
+  the same path without auth and without a rule. This separation is why a real
+  backend stays maintainable as it grows: each concern can be changed in one
+  place.</p>
+<h4>Part 7: View the seed data and confirm a reset</h4>
+<p>The starting data lives in a file. View it directly:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cat src/data/projects.data.js</pre>
+<p>To prove the in-memory behaviour: create a new project (Step 4.1), confirm it
+  appears in the list, then stop the server with <strong>Ctrl + C</strong> and
+  start it again with <code>./run_ubuntu.sh</code>. List the projects once more
+  — your created project is gone and only the seed data remains. This is the
+  difference between an in-memory store (this lab) and a persistent store (Lab
+  3).</p>
+<h4>How to stop the server</h4>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">Ctrl + C</pre>
+<h4>Completion checklist</h4>
+<ul>
+  <li>The API runs and <code>http://localhost:4000/api/health</code> returns
+    <code>ok: true</code>.</li>
+  <li>You read the project list (GET), created one (POST), updated it (PATCH)
+    and deleted it (DELETE).</li>
+  <li>You saw a 401 (no key), a 400 (invalid data) and a 404 (unknown id).</li>
+  <li>You sent at least one request from a graphical client (Postman-style).
+  </li>
+  <li>You can name the file for the route, the validation schema, the business
+    rule (service) and the data access (repository).</li>
+  <li>You can explain why a created project disappears after a server restart.
+  </li>
+</ul>
+<p
+  style="text-align: center; font-size: 0.78rem; color: #8a8f98; margin-top: 2.5rem;">
+  Designed by Dr Shuo Ding © 2026</p>

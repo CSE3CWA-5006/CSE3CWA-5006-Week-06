@@ -1,0 +1,342 @@
+<!--
+  CSE3CWA / CSE5006 — Week 6 Workshop Lab
+  Copyright (c) 2026 Dr Shuo Ding <shuoding@outlook.com>
+  Licensed under the GNU Affero General Public License v3.0 or later
+  (AGPL-3.0-or-later). Any copy, modification, or distribution must retain
+  this copyright notice and remain under the AGPL.
+-->
+<h4 class="resources-signpost" style="margin-bottom: 1rem;"><img
+    class="img-fluid" style="vertical-align: middle; margin-right: 0.5rem;"
+    src="/theme/latrobe/assets/2023/SVG/resources.svg" alt="" width="50"
+    height="50">Lab 1: Modern React Dashboard (Frontend)</h4>
+<div class="alert alert-success"
+  style="background-color: #d9ebd0; color: #242424; margin: 0 auto 1.2rem; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>Who does this lab?</strong></p>
+      <p>This lab is for <strong>both CSE3CWA and CSE5006</strong> students.
+        Everyone completes Lab 1 and Lab 2. </p>
+    </div>
+  </div>
+</div>
+<p>This lab uses the <strong>modern_react_dashboard</strong> project. It is a
+  pure frontend application built with <strong>React</strong> and the
+  <strong>Vite</strong> development server. You will not change any code in this
+  lab. The goal is to install it, run it, and understand exactly how data flows
+  from a data file, through React state, into the visible interface, and how the
+  interface reacts when you interact with it.</p>
+<p>By the end you should be able to explain, in your own words, the path:
+  <strong>data file → custom hook (state) → App coordinator → components →
+    rendered UI</strong>, and what re-renders when you type, filter, or click.
+</p>
+<h4>Part 1: Install the required software (from zero)</h4>
+<p>You will work in <strong>Ubuntu</strong>. Open a terminal with <strong>Ctrl +
+    Alt + T</strong>. Every command below is typed into this terminal and run by
+  pressing <strong>Enter</strong>.</p>
+<h5>Step 1.1 — Check whether Node.js is already installed</h5>
+<p>React and Vite run on Node.js. First check if you already have it:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">node -v
+npm -v</pre>
+<p>If both lines print a version number (for example <code>v20.11.1</code> and
+  <code>10.2.4</code>), Node.js is installed and you can skip to Step 1.3. If
+  you see <code>command not found</code>, continue to Step 1.2.</p>
+<h5>Step 1.2 — Install Node.js 20 LTS (only if missing)</h5>
+<p>Install Node.js 20 LTS from the official NodeSource repository:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs</pre>
+<p>Then check the versions again with <code>node -v</code> and <code>npm
+    -v</code>. You should now see version numbers.</p>
+<h5>Step 1.3 — Install Git (used to download the code)</h5>
+<p>Check for Git, and install it if needed:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">git --version
+# if missing:
+sudo apt update
+sudo apt install -y git</pre>
+<h4>Part 2: Download the code</h4>
+<p>All three Week 6 projects live in one GitHub repository:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-06/tree/main</pre>
+<p>The repository contains three folders, one per project:</p>
+<ul>
+  <li><code>modern_react_dashboard</code> (this lab)</li>
+  <li><code>project_ready_express_api</code> (Lab 2)</li>
+  <li><code>nextjs_project_portal</code> (Lab 3)</li>
+</ul>
+<h5>Option A — Clone with Git (recommended)</h5>
+<p>From your home folder, clone the whole repository. This downloads all three
+  projects at once:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cd ~
+git clone https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-06.git
+cd CSE3CWA-5006-Week-06</pre>
+<h5>Option B — Download a ZIP (no Git)</h5>
+<p>On the GitHub page, select the green <strong>Code</strong> button, then
+  <strong>Download ZIP</strong>. Save it, then unzip it in the terminal:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cd ~/Downloads
+unzip CSE3CWA-5006-Week-06-main.zip
+cd CSE3CWA-5006-Week-06-main</pre>
+<p>Whichever option you use, you should now be inside the repository folder.
+  Confirm the three project folders are there:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">ls</pre>
+<p>You should see <code>modern_react_dashboard</code>,
+  <code>project_ready_express_api</code> and <code>nextjs_project_portal</code>.
+</p>
+<h4>Part 3: Run the React dashboard</h4>
+<p>Move into the dashboard folder and start it with the supplied helper script.
+  The script installs the npm packages the first time, then starts the Vite
+  development server.</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">cd modern_react_dashboard
+chmod +x run_ubuntu.sh
+./run_ubuntu.sh</pre>
+<p>If you prefer to run the steps yourself instead of the script, these two
+  commands do the same thing:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">npm install
+npm run dev</pre>
+<p>When the server is ready, the terminal prints a local address. Open it in
+  your browser:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">http://localhost:5173</pre>
+<div class="alert alert-success"
+  style="background-color: #fdf6d8; color: #242424; margin: 1.2rem auto; max-width: 800px;"
+  role="alert">
+  <div class="row">
+    <div class="col-1"> </div>
+    <div class="col-11">
+      <p><strong>What is Vite?</strong></p>
+      <p>Vite is the development server and build tool for this project. When
+        you run <code>npm run dev</code>, Vite serves the app at
+        <code>localhost:5173</code> and watches your files. It also provides
+        <strong>hot reload</strong>: if a file changes, the browser updates
+        almost instantly without a full reload. You will see this in action in
+        the optional step at the end.</p>
+    </div>
+  </div>
+</div>
+<h4>Part 4: Use the dashboard and watch the data appear</h4>
+<p>When the page first loads, notice that it shows a brief <strong>loading
+    state</strong> before the project cards appear. This is intentional: the
+  demo simulates a slow data load (about 0.65 seconds) so you can see the
+  loading state that real applications need.</p>
+<p>Once loaded, the page shows:</p>
+<ul>
+  <li>A <strong>sidebar</strong> and a <strong>top bar</strong> (the page
+    frame).</li>
+  <li>Three <strong>metric cards</strong>: total projects, visible projects, and
+    average progress.</li>
+  <li>A <strong>filter bar</strong>: a search box, a status dropdown, and a
+    "Simulate error" button.</li>
+  <li>A list of <strong>project cards</strong> on the left and a <strong>detail
+      panel</strong> on the right.</li>
+</ul>
+<p>Now interact with it and observe the result of each action:</p>
+<ul>
+  <li><strong>Type in the search box</strong> (for example
+    <code>library</code>). The visible cards shrink to only matching projects,
+    and the "Visible" metric updates.</li>
+  <li><strong>Choose a status</strong> in the dropdown (for example <code>At
+      risk</code>). Only projects with that status remain.</li>
+  <li><strong>Click a project card.</strong> The detail panel on the right
+    updates to show that project, and the clicked card becomes highlighted.</li>
+  <li><strong>Click "Simulate error".</strong> A red error box appears with a
+    Dismiss button. Click Dismiss to clear it.</li>
+  <li><strong>Search for something that does not exist</strong> (for example
+    <code>zzz</code>). An empty state message appears instead of cards.</li>
+</ul>
+<h4>Part 5: Understand the data flow (no code changes)</h4>
+<p>This project has <strong>no backend and no database</strong>. The data lives
+  in a JavaScript file and is loaded into React state. Follow the path below by
+  opening each file. In Ubuntu you can read any file with a native editor; you
+  do not need to change anything.</p>
+<h5>Step 5.1 — Open files with a native Ubuntu editor</h5>
+<p>You can use <code>vi</code> (advanced) or the simpler <code>nano</code> from
+  the terminal, or the graphical <code>gedit</code>/<strong>Text
+    Editor</strong>. To just read a file without an editor, use <code>cat</code>
+  or <code>less</code>:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;"># print a file to the screen
+cat src/data/projects.js
+
+# read a file page by page (press q to quit)
+less src/hooks/useProjects.js
+
+# open in nano (press Ctrl+X to exit), or vi (press :q then Enter to exit)
+nano src/App.jsx
+vi src/App.jsx</pre>
+<p>If you are new to these editors, the official guides are helpful:
+  <code>nano</code> at <a href="https://www.nano-editor.org/docs.php"
+    target="_blank" rel="noopener">https://www.nano-editor.org/docs.php</a>, and
+  <code>vi</code>/Vim at <a href="https://www.vim.org/docs.php" target="_blank"
+    rel="noopener">https://www.vim.org/docs.php</a>. For beginners,
+  <code>nano</code> is the easiest: the shortcuts are shown at the bottom of the
+  screen (<code>^X</code> means Ctrl + X).</p>
+<h5>Step 5.2 — Follow the data from source to screen</h5>
+<p>Open the files in this order and match each one to what you saw on screen.
+</p>
+<p><strong>1. The data source:</strong> <code>src/data/projects.js</code>. This
+  is the starting point of all the data. It exports an array called
+  <code>projectData</code>. Each project has fields such as <code>name</code>,
+  <code>owner</code>, <code>status</code>, <code>category</code>,
+  <code>progress</code> and <code>priority</code>. These are exactly the values
+  you see on the cards.</p>
+<p><strong>2. The state and logic:</strong>
+  <code>src/hooks/useProjects.js</code>. This custom hook loads the data into
+  React state and holds everything that changes. The simulated load uses a timer
+  before the data appears:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">useEffect(() =&gt; {
+  const timer = window.setTimeout(() =&gt; {
+    setProjects(projectData);
+    setSelectedId(projectData[0]?.id ?? null);
+    setIsLoading(false);
+  }, 650);
+
+  return () =&gt; window.clearTimeout(timer);
+}, []);</pre>
+<p>The visible list is <strong>derived</strong> from the data plus your search
+  and filter, not stored separately. This is why the cards update instantly when
+  you type:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">const filteredProjects = useMemo(() =&gt; {
+  const normalisedQuery = query.trim().toLowerCase();
+  return projects.filter((project) =&gt; {
+    const matchesStatus = statusFilter === "All" || project.status === statusFilter;
+    const matchesQuery =
+      normalisedQuery.length === 0 ||
+      project.name.toLowerCase().includes(normalisedQuery) ||
+      project.owner.toLowerCase().includes(normalisedQuery) ||
+      project.category.toLowerCase().includes(normalisedQuery);
+    return matchesStatus &amp;&amp; matchesQuery;
+  });
+}, [projects, query, statusFilter]);</pre>
+<p><strong>3. The coordinator:</strong> <code>src/App.jsx</code>. This file does
+  not own the detailed logic. It asks the hook for the current data and
+  functions, then passes the right values down to each component:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">const {
+  projects,
+  filteredProjects,
+  selectedProject,
+  query,
+  setQuery,
+  statusFilter,
+  setStatusFilter,
+  selectedId,
+  setSelectedId,
+  isLoading,
+  error,
+  simulateError,
+  clearError
+} = useProjects();</pre>
+<p><strong>4. The components</strong> (in <code>src/components/</code>):</p>
+<ul>
+  <li><code>AppShell.jsx</code> — the sidebar and top bar frame.</li>
+  <li><code>MetricCard.jsx</code> — one summary metric (used three times).</li>
+  <li><code>FilterBar.jsx</code> — the search box and status dropdown.</li>
+  <li><code>ProjectCard.jsx</code> — one project in the list.</li>
+  <li><code>ProjectDetail.jsx</code> — the detail panel on the right.</li>
+  <li><code>StateMessage.jsx</code> — the loading, empty and error states.</li>
+</ul>
+<h5>Step 5.3 — Trace one interaction end to end</h5>
+<p>Take "clicking a card" and follow it through the code:</p>
+<ul>
+  <li>In <code>App.jsx</code>, each <code>ProjectCard</code> receives an
+    <code>onSelect</code> function set to <code>setSelectedId</code>.</li>
+  <li>In <code>ProjectCard.jsx</code>, clicking the card calls
+    <code>onSelect(project.id)</code>. The card does not change the detail panel
+    directly.</li>
+  <li>That updates the <code>selectedId</code> state inside the hook.</li>
+  <li>React re-renders. <code>App.jsx</code> recalculates
+    <code>selectedProject</code> and passes it to <code>ProjectDetail</code>,
+    which now shows the new project.</li>
+</ul>
+<p>This is the core React idea: <strong>you do not edit the page directly; you
+    change state, and React re-renders the UI from the new state.</strong> The
+  data flow is one direction: data → state → components → screen, and user
+  actions flow back up through callbacks to change state.</p>
+<h4>Part 6: Inspect the live data in the browser (developer view)</h4>
+<p>Real developers inspect a running page with the browser developer tools. You
+  will only look; you will not change code.</p>
+<ul>
+  <li>In the browser on <code>http://localhost:5173</code>, press
+    <strong>F12</strong> (or right-click the page and choose
+    <strong>Inspect</strong>) to open the developer tools.</li>
+  <li>Open the <strong>Elements</strong> tab. Hover over the HTML and watch the
+    matching part of the page highlight. Find a project card in the HTML and see
+    its text matches a project in <code>projects.js</code>.</li>
+  <li>Open the <strong>Network</strong> tab, then refresh the page with
+    <strong>F5</strong>. Because this project has no backend, you will see it
+    load JavaScript and CSS files but <strong>no API/data request</strong> — the
+    data is built into the JavaScript bundle. This is an important observation:
+    it confirms the dashboard is frontend-only.</li>
+  <li>Open the <strong>Console</strong> tab. If you click "Simulate error" on
+    the page, the error is shown in the UI (not hidden in the console) — that is
+    the deliberate design of a user-facing error state.</li>
+</ul>
+<h5>Confirm there is no backend API with curl</h5>
+<p><strong>curl</strong> is a command-line tool that sends an HTTP request and
+  prints the raw response. Developers use it to talk to servers and APIs without
+  a browser. It is normally pre-installed on Ubuntu; check, and install it if
+  needed:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">curl --version
+# if it is missing:
+sudo apt install -y curl</pre>
+<p>With the dev server running, ask the server for the home page. Because this
+  is a <strong>frontend-only</strong> project, the server returns an HTML page,
+  not JSON data:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;"># the dev server returns an HTML document (you will see &lt;!doctype html&gt; ...)
+curl http://localhost:5173
+
+# show only the response headers; content-type is text/html, not application/json
+curl -I http://localhost:5173</pre>
+<p>Compare this with Lab 2 and Lab 3, where the same <code>curl</code> command
+  against an API endpoint returns <strong>JSON data</strong>. That contrast is
+  the practical difference between a pure frontend (this lab) and a backend that
+  serves data. There is no CRUD API to test here because the dashboard has no
+  backend — its data lives inside the JavaScript bundle.</p>
+<h4>Part 7 (optional): See Vite hot reload</h4>
+<p>This step lets you watch the data-to-UI link, but it is optional and is the
+  only place you touch a file. Keep the server running. Open the data file:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">nano src/data/projects.js</pre>
+<p>Copy one project block, paste it as a new entry, give it a new
+  <code>id</code> number and a different <code>name</code>, then save (in nano,
+  <strong>Ctrl + O</strong>, <strong>Enter</strong>, then <strong>Ctrl +
+    X</strong>). Switch to the browser. Vite hot-reloads automatically and the
+  new card appears, and the "Projects" metric increases by one. This proves the
+  screen is a direct function of the data. You can undo your change afterwards.
+</p>
+<h4>How to stop the server</h4>
+<p>Go back to the terminal running the server and press:</p>
+<pre class="code-window"
+  style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); white-space: pre; display: block;">Ctrl + C</pre>
+<p>To run it again, use <code>./run_ubuntu.sh</code> from the
+  <code>modern_react_dashboard</code> folder.</p>
+<h4>Completion checklist</h4>
+<ul>
+  <li>The dashboard runs at <code>localhost:5173</code> and shows the loading
+    state, then the cards.</li>
+  <li>You can demonstrate search, status filter, card selection, the simulated
+    error, and the empty state.</li>
+  <li>You can name the file that holds the data
+    (<code>src/data/projects.js</code>), the file that holds the state
+    (<code>src/hooks/useProjects.js</code>), and the coordinator
+    (<code>src/App.jsx</code>).</li>
+  <li>You can explain, in one sentence, why clicking a card changes the detail
+    panel (state changes, React re-renders).</li>
+  <li>You used the browser Network tab to confirm there is no backend request.
+  </li>
+</ul>
+<p
+  style="text-align: center; font-size: 0.78rem; color: #8a8f98; margin-top: 2.5rem;">
+  Designed by Dr Shuo Ding © 2026</p>
