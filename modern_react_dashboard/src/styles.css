@@ -144,6 +144,7 @@ button {
 .dashboard {
   display: grid;
   gap: 18px;
+  width: 70%;
 }
 
 .intro-panel,
