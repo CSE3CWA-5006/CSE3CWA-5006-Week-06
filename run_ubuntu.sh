@@ -42,23 +42,22 @@ DB_PORT="${POSTGRES_PORT:-5432}"
 
 if [ -z "${DATABASE_URL:-}" ] && [ ! -f .env.local ]; then
   echo "==> Preparing local PostgreSQL database: ${DB_NAME}"
-  sudo -u postgres psql -d postgres -v ON_ERROR_STOP=1 \
-    -v db_user="$DB_USER" -v db_password="$DB_PASSWORD" -v db_name="$DB_NAME" <<'SQL'
-DO $do$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'db_user') THEN
-    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', :'db_user', :'db_password');
-  ELSE
-    EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', :'db_user', :'db_password');
-  END IF;
-END
-$do$;
-SQL
 
-  if ! sudo -u postgres psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1; then
-    sudo -u postgres createdb -O "${DB_USER}" "${DB_NAME}"
+  # PostgreSQL's OS user may not be allowed to enter the student's home folder.
+  # Run administrative commands from /tmp and use the same simple setup as the
+  # original working script.
+  sudo -u postgres bash -c "cd /tmp && psql -X -d postgres -v ON_ERROR_STOP=1 -c \"DO \\\$\\\$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${DB_USER}') THEN
+      CREATE ROLE ${DB_USER} LOGIN PASSWORD '${DB_PASSWORD}';
+    ELSE
+      ALTER ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASSWORD}';
+    END IF;
+  END \\\$\\\$;\""
+
+  if ! sudo -u postgres bash -c "cd /tmp && psql -X -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" | grep -q '^1$'; then
+    sudo -u postgres bash -c "cd /tmp && createdb -O \"${DB_USER}\" \"${DB_NAME}\""
   else
-    sudo -u postgres psql -d postgres -v ON_ERROR_STOP=1 -c "ALTER DATABASE \"${DB_NAME}\" OWNER TO \"${DB_USER}\";"
+    sudo -u postgres bash -c "cd /tmp && psql -X -d postgres -v ON_ERROR_STOP=1 -c \"ALTER DATABASE \\\"${DB_NAME}\\\" OWNER TO \\\"${DB_USER}\\\";\""
   fi
 
   cat > .env.local <<ENV
